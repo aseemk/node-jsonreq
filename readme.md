@@ -35,5 +35,5 @@ Development
 Testing
 -------
 
-    node test
+    npm test
 

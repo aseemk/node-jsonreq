@@ -9,6 +9,10 @@
     "main": "./jsonreq.js",
     "engines": {"node": "*"},
     "devDependencies": {
-        "should": "https://github.com/aseemk/should.js/tarball/master"
+        "should": "https://github.com/aseemk/should.js/tarball/master",
+        "streamline": "0.1.*"
+    },
+    "scripts": {
+        "test": "node-streamline test_"
     }
 }
