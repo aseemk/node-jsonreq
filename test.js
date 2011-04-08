@@ -4,18 +4,18 @@ var should = require('should');
 var TEST_CASES = {
     
     'Non-existent': {
-        url: 'http://icertainlydontexistwoohoo.com',
-        err: true,
+        url: 'http://i.certainly.dont.exist.example.com',
+        err: /ENOTFOUND/,
     },
     
     'Non-200': {
-        url: 'http://example.com/i/certainly/dont/exist/woo/hoo',
-        err: true,
+        url: 'http://json.org/404',
+        err: /404/,
     },
     
     'Non-JSON': {
         url: 'http://example.com/',
-        err: true,
+        err: /SyntaxError/,
     },
     
     // via http://www.flickr.com/services/api/response.json.html
@@ -23,16 +23,16 @@ var TEST_CASES = {
         url: 'http://www.flickr.com/services/rest/?method=flickr.test.echo&format=json&api_key=fe492f862a480692bb7905def6c9e2ca&nojsoncallback=1',
         exp: {
             method: {
-                content: 'flickr.test.echo',
+                _content: 'flickr.test.echo',
             },
             format: {
-                content: 'json',
+                _content: 'json',
             },
             api_key: {
-                content: 'fe492f862a480692bb7905def6c9e2ca',
+                _content: 'fe492f862a480692bb7905def6c9e2ca',
             },
             nojsoncallback: {
-                content: '1',
+                _content: '1',
             },
             stat: 'ok',
         },
@@ -71,7 +71,7 @@ var TEST_CASES = {
 var started = 0,
     finished = 0;
 
-process.on('beforeExit', function () {
+process.on('exit', function () {
     var remaining = started - finished;
     remaining.should.equal(0, remaining + ' callbacks never fired!');
 });
@@ -83,6 +83,7 @@ function test(name, data) {
         
         if (data.err) {
             should.exist(err, name + ' expected error, received result: ' + act);
+            err.should.match(data.err, name + ' error doesn\'t match expected: ' + err + ' vs. ' + data.err);
             should.not.exist(act, name + ' received error *and* result: ' + act);
             return;
         }
@@ -93,7 +94,7 @@ function test(name, data) {
         act.should.be.a('object', name + ' returned content is not an object or array: ' + act);
         
         if (data.exp) {
-            act.should.mirror(data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + exp);
+            act.should.match(data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
         }
     });
 }
