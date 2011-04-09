@@ -13,6 +13,6 @@
         "streamline": "0.1.*"
     },
     "scripts": {
-        "test": "node-streamline test_"
+        "test": "node-streamline test"
     }
 }

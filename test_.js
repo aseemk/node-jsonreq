@@ -76,27 +76,34 @@ process.on('exit', function () {
     remaining.should.equal(0, remaining + ' callbacks never fired!');
 });
 
-function test(name, data) {
+function test(name, data, _) {
+    var act, err;
+    
     started++;
-    json.get(data.url, function (err, act) {
-        finished++;
-        
-        if (data.err) {
-            should.exist(err, name + ' expected error, received result: ' + act);
-            err.should.match(data.err, name + ' error doesn\'t match expected: ' + err + ' vs. ' + data.err);
-            should.not.exist(act, name + ' received error *and* result: ' + act);
-            return;
-        }
-        
-        should.not.exist(err, name + ' threw error: ' + err);
-        should.exist(act, name + ' received neither error nor result');
-        
-        act.should.be.a('object', name + ' returned content is not an object or array: ' + act);
-        
-        if (data.exp) {
-            act.should.match(data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
-        }
-    });
+    
+    try {
+        act = json.get(data.url, _);
+    } catch (e) {
+        err = e;
+    }
+    
+    finished++;
+    
+    if (data.err) {
+        should.exist(err, name + ' expected error, received result: ' + act);
+        err.should.match(data.err, name + ' error doesn\'t match expected: ' + err + ' vs. ' + data.err);
+        should.not.exist(act, name + ' received error *and* result: ' + act);
+        return;
+    }
+    
+    should.not.exist(err, name + ' threw error: ' + err);
+    should.exist(act, name + ' received neither error nor result');
+    
+    act.should.be.a('object', name + ' returned content is not an object or array: ' + act);
+    
+    if (data.exp) {
+        act.should.match(data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
+    }
 }
 
 for (var name in TEST_CASES) {
