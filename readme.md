@@ -16,12 +16,12 @@ Usage
 
     var json = require('jsonreq');
     
-    json.get('http://api.example.com/foo.json', function (err, result) {
+    json.get('http://api.example.com/foo.json', function (err, data) {
         // ...
     });
     
     // TODO not implemented yet
-    json.post('http://api.example.com/foo.json', data, function (err, result) {
+    json.post('http://api.example.com/foo.json', data, function (err, data) {
         // ...
     });
 

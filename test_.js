@@ -1,5 +1,10 @@
 var json = require('./');
 var should = require('should');
+var streamline = require('streamline');
+
+var SERVER = require('./test_server');
+var SERVER_PORT = 9999;
+var SERVER_BASE = 'http://localhost:' + SERVER_PORT;
 
 var TEST_CASES = {
     
@@ -14,28 +19,13 @@ var TEST_CASES = {
     },
     
     'Non-JSON': {
-        url: 'http://example.com/',
+        url: 'http://google.com/',
         err: /SyntaxError/,
     },
     
-    // via http://www.flickr.com/services/api/response.json.html
-    'Flickr': {
-        url: 'http://www.flickr.com/services/rest/?method=flickr.test.echo&format=json&api_key=fe492f862a480692bb7905def6c9e2ca&nojsoncallback=1',
-        exp: {
-            method: {
-                _content: 'flickr.test.echo',
-            },
-            format: {
-                _content: 'json',
-            },
-            api_key: {
-                _content: 'fe492f862a480692bb7905def6c9e2ca',
-            },
-            nojsoncallback: {
-                _content: '1',
-            },
-            stat: 'ok',
-        },
+    'Empty JSON': {
+        url: SERVER_BASE + '/',
+        exp: null,
     },
     
     // via http://dev.twitter.com/doc/get/statuses/show/:id
@@ -76,6 +66,11 @@ process.on('exit', function () {
     remaining.should.equal(0, remaining + ' callbacks never fired!');
 });
 
+// TODO this should be part of should.js (or replace should.exist)
+function isdef(x) {
+    return typeof x !== "undefined";
+}
+
 function test(name, data, _) {
     var act, err;
     
@@ -97,15 +92,31 @@ function test(name, data, _) {
     }
     
     should.not.exist(err, name + ' threw error: ' + err);
-    should.exist(act, name + ' received neither error nor result');
     
-    act.should.be.a('object', name + ' returned content is not an object or array: ' + act);
+    // TEMP act and data.exp can be null, so we can't be totally expressive here. see comments:
     
-    if (data.exp) {
-        act.should.match(data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
+    // equivalent to "act should be defined" (but it can be null)
+    isdef(act).should.be.truthy(name + ' received neither error nor result');
+    
+    // equivalent to "act should be of type object"
+    // note that {...}, [...] and null are all type 'object'
+    (typeof act === 'object').should.be.truthy(name + ' returned content is not an object or array: ' + act);
+    
+    if (isdef(data.exp)) {
+        // equivalent to "act should match data.exp", but need to account for null
+        should.deepEqual(act, data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
     }
 }
 
+SERVER.listen(SERVER_PORT, _);      // wait for it to start
+
+var testFutures = [];
 for (var name in TEST_CASES) {
-    test(name, TEST_CASES[name]);
+    testFutures.push(
+        test(name, TEST_CASES[name])
+    );
 }
+
+streamline.flows.spray(testFutures).collectAll(_);
+
+SERVER.close();

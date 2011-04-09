@@ -20,6 +20,12 @@ exports.get = function get(url, callback) {
             return callback(new Error(resp.statusCode));
         }
         
+        // TODO should we auto-redirect? should that be an option?
+        //if (resp.statusCode >= 300) {
+        //    get(resp.headers['location'], callback);
+        //    return;
+        //}
+        
         var body = [];
         
         // TEMP TODO should this really be hardcoded?
@@ -30,10 +36,10 @@ exports.get = function get(url, callback) {
         });
         
         resp.on('end', function () {
-            var data, err;
+            var data, err, bodyStr = body.join('');
             
             try {
-                data = JSON.parse(body.join(''));
+                data = bodyStr ? JSON.parse(bodyStr) : null;
             } catch (e) {
                 err = e;
             }
