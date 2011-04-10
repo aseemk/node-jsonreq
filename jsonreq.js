@@ -1,7 +1,7 @@
 var http = require('http');
 var url_parse = require('url').parse;
 
-exports.get = function get(url, callback) {
+function req(method, url, data, callback) {
     
     url = url_parse(url);
     
@@ -9,12 +9,13 @@ exports.get = function get(url, callback) {
         host: url.hostname,
         port: url.port || 80,
         path: url.pathname + (url.search || ''),
+        method: method,
         headers: {
             'Accept': 'application/json',
         },
     };
     
-    http.get(opts, function (resp) {
+    var req = http.request(opts, function (resp) {
         
         if (resp.statusCode >= 400) {
             return callback(new Error(resp.statusCode));
@@ -47,12 +48,25 @@ exports.get = function get(url, callback) {
             callback(err, data);
         });
         
-    }).on('error', function (err) {
+    });
+    
+    req.on('error', function (err) {
         callback(err);
     });
     
+    if (data) {
+        req.setHeader('Content-Type', 'application/json');
+        req.write(JSON.stringify(data));
+    }
+    
+    req.end();
+    
+};
+
+exports.get = function get(url, callback) {
+    req('GET', url, null, callback);
 };
 
 exports.post = function post(url, data, callback) {
-    callback(new Error("not implemented yet!"));
+    req('POST', url, data, callback);
 };
