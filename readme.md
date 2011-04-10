@@ -2,7 +2,7 @@ jsonreq for Node.js
 ===================
 
 JSON requests made easy. No more dealing with low-level HTTP events, chunked requests or responses,
-buffering, etc. Just get and post to send and receive.
+buffering, parsing, try-catching, etc. Just get and post to send and receive.
 
 
 Installation
