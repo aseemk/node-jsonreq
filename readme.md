@@ -20,8 +20,12 @@ Usage
         // ...
     });
     
-    // TODO not implemented yet
-    json.post('http://api.example.com/foo.json', data, function (err, data) {
+    var obj = {
+        key: 'value',
+        items: [1, 2, 3],
+    };
+    
+    json.post('http://api.example.com/foo.json', obj, function (err, data) {
         // ...
     });
 
