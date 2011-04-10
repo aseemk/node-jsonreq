@@ -1,10 +1,11 @@
 var json = require('./');
 var should = require('should');
 var streamline = require('streamline');
+var flows = streamline.flows;
 
 var SERVER = require('./test_server');
 var SERVER_PORT = 9999;
-var SERVER_BASE = 'http://localhost:' + SERVER_PORT;
+var SERVER_ADDRESS = 'http://localhost:' + SERVER_PORT;
 
 var TEST_CASES = {
     
@@ -24,7 +25,7 @@ var TEST_CASES = {
     },
     
     'Empty JSON': {
-        url: SERVER_BASE + '/',
+        url: SERVER_ADDRESS,
         exp: null,
     },
     
@@ -56,6 +57,17 @@ var TEST_CASES = {
         },
     },
     
+    // our test server reverses data passed to it
+    'Post JSON': {
+        url: SERVER_ADDRESS,
+        post: [ 'alpha', 'beta', 'gamma', {
+            'delta': 'epsilon',
+        }],
+        exp: [{
+            'delta': 'epsilon',
+        }, 'gamma', 'beta', 'alpha'],
+    },
+    
 };
 
 var started = 0,
@@ -66,18 +78,17 @@ process.on('exit', function () {
     remaining.should.equal(0, remaining + ' callbacks never fired!');
 });
 
-// TODO this should be part of should.js (or replace should.exist)
-function isdef(x) {
-    return typeof x !== "undefined";
-}
-
 function test(name, data, _) {
     var act, err;
     
     started++;
     
     try {
-        act = json.get(data.url, _);
+        if (data.post) {
+            act = json.post(data.url, data.post, _);
+        } else {
+            act = json.get(data.url, _);
+        }
     } catch (e) {
         err = e;
     }
@@ -85,38 +96,51 @@ function test(name, data, _) {
     finished++;
     
     if (data.err) {
-        should.exist(err, name + ' expected error, received result: ' + act);
-        err.should.match(data.err, name + ' error doesn\'t match expected: ' + err + ' vs. ' + data.err);
-        should.not.exist(act, name + ' received error *and* result: ' + act);
+        should.exist(err, 'expected error, received result: ' + act);
+        err.should.match(data.err, 'error doesn\'t match expected: ' + err + ' vs. ' + data.err);
+        should.not.exist(act, 'received error *and* result: ' + act);
         return;
     }
     
-    should.not.exist(err, name + ' threw error: ' + err);
+    should.not.exist(err);
+    should.be.defined(act, 'received neither error not result');
+        // note how act can be null, but cannot be undefined
     
     // TEMP act and data.exp can be null, so we can't be totally expressive here. see comments:
-    
-    // equivalent to "act should be defined" (but it can be null)
-    isdef(act).should.be.truthy(name + ' received neither error nor result');
     
     // equivalent to "act should be of type object"
     // note that {...}, [...] and null are all type 'object'
     (typeof act === 'object').should.be.truthy(name + ' returned content is not an object or array: ' + act);
     
-    if (isdef(data.exp)) {
+    if ('exp' in data) {    // i.e. it's specified (but can be null)
         // equivalent to "act should match data.exp", but need to account for null
         should.deepEqual(act, data.exp, name + ' content doesn\'t match expected: ' + act + ' vs. ' + data.exp);
     }
 }
 
+function tryTest(name, data, _) {
+    try {
+        test(name, data, _);
+        console.log('\t✓ ' + name);
+    } catch (e) {
+        console.log('\tx ' + name);
+        console.error('\t  ' + e.message);
+        // don't propagate!
+    }
+}
+
+console.log();
 SERVER.listen(SERVER_PORT, _);      // wait for it to start
 
 var testFutures = [];
+
 for (var name in TEST_CASES) {
     testFutures.push(
-        test(name, TEST_CASES[name])
+        tryTest(name, TEST_CASES[name])
     );
 }
 
-streamline.flows.spray(testFutures).collectAll(_);
+flows.spray(testFutures).collectAll(_);
 
 SERVER.close();
+console.log();

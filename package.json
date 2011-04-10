@@ -10,9 +10,9 @@
     "engines": {"node": "*"},
     "devDependencies": {
         "should": "https://github.com/aseemk/should.js/tarball/master",
-        "streamline": "0.1.*"
+        "streamline": "0.1.x"
     },
     "scripts": {
-        "test": "node-streamline test"
+        "test": "node-streamline test_"
     }
 }
