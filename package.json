@@ -1,7 +1,7 @@
 {
     "name": "jsonreq",
     "description": "JSON requests made easy.",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "author": "Aseem Kishore <aseem.kishore@gmail.com>",
     "keywords": ["json", "request", "http", "get", "post"],
     "homepage": "https://github.com/aseemk/node-jsonreq",
